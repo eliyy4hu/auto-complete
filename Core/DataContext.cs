@@ -8,7 +8,7 @@ namespace Core
 {
     public class DataContext : DbContext
     {
-        public DbSet<DictionaryEntry> DictionaryEntries { get; set; }
+        public DbSet<DictionaryEntry> FrequencyDictionary { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
