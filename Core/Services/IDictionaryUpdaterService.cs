@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Core.Services
 {
@@ -9,5 +7,7 @@ namespace Core.Services
         public void InitDictionary(IEnumerable<string> words);
         public void UpdateDictionary(IEnumerable<string> words);
         public void ClearDictionary();
+        public IEnumerable<string> GetMostFrequenciesWords(string prefix, int count);
+        public void SaveResult();
     }
 }
