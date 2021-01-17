@@ -1,8 +1,8 @@
 ﻿using CommandLine;
 using Core;
+using Core.PreProcess;
 using Core.Readers;
 using Core.Services;
-using Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,95 +11,86 @@ namespace ConsoleApp
 {
     internal class Program
     {
-        private const int WordsCount = 5;
-
         private static void Main(string[] args)
         {
             args = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
             var options = Parser.Default.ParseArguments<Options>(args);
-
-            options.WithParsed(x => WithParsed(x));
+            options.WithParsed(x => Console.WriteLine(WithParsed(x)));
         }
 
-        public static Result WithParsed(Options options)
+        private static Result WithParsed(Options options)
         {
-            var dictionaryService = new SimpleDictionaryService(new DataContext());
+            var validateArgs = ValidateArguments(options);
+            if (!validateArgs.IsSucceed)
+            {
+                return validateArgs;
+            }
+
             using (var context = new DataContext())
             {
                 var reader = new CommonReader();
-
-                var validationResult = ValidateInput(options);
-                if (!validationResult.IsSucceed)
-                    return validationResult;
-
-                return ProcessOptions(options, dictionaryService, reader);
+                var preprocessor = new Preprocessor();
+                var dictionaryService = new InMemoryBinSearchDictionaryService(context);
+                var processor = new TextFileProcessor(reader, preprocessor, dictionaryService, dictionaryService);
+                return processor.Process(ConvertToProcessOptions(options));
             }
         }
 
-        private static Result ProcessOptions(Options options, SimpleDictionaryService dictionaryService, TextReaderBase reader)
+        private static Result ValidateArguments(Options options)
         {
-            if (options.Clear)
+            var commandsActionValues = new List<bool>
+                { options.Init,
+                options.Update,
+                options.Clear };
+            if (commandsActionValues.Count(x => x) > 1)
             {
-                dictionaryService.ClearDictionary();
-                return Result.Success("Clear successfull");
+                return Result.Error("Arguments should contain only one action argument(Init, Update, Clear)");
             }
-            if (!string.IsNullOrEmpty(options.InputFile))
+            if (options.Init || options.Update)
             {
-                return ProcessTextFile(options.InputFile, options, dictionaryService, reader);
-            }
-            else if (!string.IsNullOrEmpty(options.InputDirectory))
-            {
-            }
-            else
-            {
-                var input = Console.ReadLine();
-                while (!string.IsNullOrWhiteSpace(input))
+                var targetArguments = new string[] { options.InputFile, options.InputDirectory };
+                if (targetArguments.All(x => string.IsNullOrEmpty(x)))
                 {
-                    var result = dictionaryService
-                        .GetMostFrequenciesWords(input, WordsCount).ToList();
-                    result.ForEach(w => Console.WriteLine(w));
-                    Console.WriteLine();
-                    input = Console.ReadLine();
+                    return Result.Error("Missing required target argument. To update dictionary specify file or directory");
+                }
+                if (targetArguments.Count(x => !string.IsNullOrEmpty(x)) > 1)
+                {
+                    return Result.Error("Only one target argument allowed with update or init action arguments");
                 }
             }
             return Result.Success();
         }
 
-        private static Result ProcessTextFile(string file, Options options, SimpleDictionaryService dictionaryService, TextReaderBase reader)
+        private static ProcessOptions ConvertToProcessOptions(Options options)
         {
-            if (reader.IsSupportedFileExtension(file))
+            var result = new ProcessOptions();
+            if (options.Clear)
             {
-                var text = reader.ReadText(file);
-                var words = TextUtils.SplitTextByWords(text);
-                return ProcessWords(options, dictionaryService, words);
+                result.Action = Core.Action.Clear;
+                return result;
             }
-            else
+            else if (options.Init)
             {
-                return Result.Error($"Unsupported format.Supported formats are{string.Join(", ", reader.SupportedExtensions)}");
-            }
-        }
-
-        private static Result ProcessWords(Options options, SimpleDictionaryService dictionaryService, List<string> words)
-        {
-            if (options.Init)
-            {
-                dictionaryService.InitDictionary(words);
-                return Result.Success("Init successfull");
+                result.Action = Core.Action.Init;
             }
             else if (options.Update)
             {
-                dictionaryService.UpdateDictionary(words);
-                return Result.Success("Update successfull");
+                result.Action = Core.Action.Update;
             }
-            else
+            else if (!options.Clear && !options.Init && !options.Update)
             {
-                throw new ArgumentException();
+                result.Action = Core.Action.Read;
             }
-        }
 
-        private static Result ValidateInput(Options options)
-        {
-            return Result.Success();
+            if (string.IsNullOrWhiteSpace(options.InputDirectory))
+            {
+                result.TargetType = TargetType.Directory;
+            }
+            else if (string.IsNullOrWhiteSpace(options.InputFile))
+            {
+                result.TargetType = TargetType.File;
+            }
+            return result;
         }
     }
 }

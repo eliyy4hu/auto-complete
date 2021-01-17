@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ConsoleApp
+﻿namespace Core
 {
     public class Result
     {
@@ -11,14 +9,21 @@ namespace ConsoleApp
         {
             return new Result() { IsSucceed = false, Message = message };
         }
+
         public static Result Success(string message)
         {
             return new Result() { IsSucceed = true, Message = message };
         }
 
-        internal static Result Success()
+        public static Result Success()
         {
             return Success(null);
+        }
+
+        public override string ToString()
+        {
+            var prefix = IsSucceed ? "Success - " : "Error - ";
+            return prefix + Message;
         }
     }
 }

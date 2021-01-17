@@ -9,7 +9,6 @@ namespace Core.Readers
     {
         public override List<string> SupportedExtensions => new List<string> { "txt" };
 
-
         public override string ReadText(string inputPath)
         {
             using (var fileStream = File.OpenRead(inputPath))

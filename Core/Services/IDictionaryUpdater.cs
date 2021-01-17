@@ -2,12 +2,17 @@
 
 namespace Core.Services
 {
-    public interface IDictionaryUpdaterService
+    public interface IDictionaryUpdater
     {
         public void InitDictionary(IEnumerable<string> words);
         public void UpdateDictionary(IEnumerable<string> words);
         public void ClearDictionary();
-        public IEnumerable<string> GetMostFrequenciesWords(string prefix, int count);
         public void SaveResult();
+        public bool Initialized();
+    }
+    public interface IDictionaryReader
+    {
+        public IEnumerable<string> GetMostFrequenciesWords(string prefix, int count);
+
     }
 }

@@ -6,7 +6,8 @@ using System.Linq;
 
 namespace Core.Services
 {
-    public class SimpleDictionaryService : IDictionaryUpdaterService
+    public class SimpleDictionaryService :
+        IDictionaryUpdater, IDictionaryReader
     {
         private DataContext context;
 
@@ -37,6 +38,11 @@ namespace Core.Services
                     .Add(new DictionaryEntry { Word = word.Key, Count = word.Value });
             }
             context.SaveChanges();
+        }
+
+        public bool Initialized()
+        {
+            return context.FrequencyDictionary.Any();
         }
 
         public void SaveResult()
