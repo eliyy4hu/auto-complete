@@ -2,7 +2,7 @@
 
 namespace Core
 {
-    public class Options
+    public class ConsoleOptions
     {
         [Option('i', "init", Required = false,
            HelpText = "Init dictionary")]

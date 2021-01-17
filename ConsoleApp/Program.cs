@@ -14,11 +14,11 @@ namespace ConsoleApp
         private static void Main(string[] args)
         {
             args = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
-            var options = Parser.Default.ParseArguments<Options>(args);
+            var options = Parser.Default.ParseArguments<ConsoleOptions>(args);
             options.WithParsed(x => Console.WriteLine(WithParsed(x)));
         }
 
-        private static Result WithParsed(Options options)
+        private static Result WithParsed(ConsoleOptions options)
         {
             var validateArgs = ValidateArguments(options);
             if (!validateArgs.IsSucceed)
@@ -30,13 +30,14 @@ namespace ConsoleApp
             {
                 var reader = new CommonReader();
                 var preprocessor = new Preprocessor();
-                var dictionaryService = new InMemoryBinSearchDictionaryService(context);
-                var processor = new TextFileProcessor(reader, preprocessor, dictionaryService, dictionaryService);
+                var dictionaryReader = new InMemoryBinSearchDictionaryService(context);
+                var dictionaryUpdater = new InMemoryBinSearchDictionaryService(context);
+                var processor = new TextFileProcessor(reader, preprocessor, dictionaryUpdater, dictionaryReader);
                 return processor.Process(ConvertToProcessOptions(options));
             }
         }
 
-        private static Result ValidateArguments(Options options)
+        private static Result ValidateArguments(ConsoleOptions options)
         {
             var commandsActionValues = new List<bool>
                 { options.Init,
@@ -61,36 +62,42 @@ namespace ConsoleApp
             return Result.Success();
         }
 
-        private static ProcessOptions ConvertToProcessOptions(Options options)
+        private static ProcessOptions ConvertToProcessOptions(ConsoleOptions options)
         {
-            var result = new ProcessOptions();
-            if (options.Clear)
+            var result = new ProcessOptions
             {
-                result.Action = Core.Action.Clear;
-                return result;
-            }
-            else if (options.Init)
-            {
-                result.Action = Core.Action.Init;
-            }
-            else if (options.Update)
-            {
-                result.Action = Core.Action.Update;
-            }
-            else if (!options.Clear && !options.Init && !options.Update)
-            {
-                result.Action = Core.Action.Read;
-            }
+                Action = GetAction(options)
+            };
 
             if (string.IsNullOrWhiteSpace(options.InputDirectory))
             {
                 result.TargetType = TargetType.Directory;
             }
-            else if (string.IsNullOrWhiteSpace(options.InputFile))
+            if (string.IsNullOrWhiteSpace(options.InputFile))
             {
                 result.TargetType = TargetType.File;
             }
             return result;
+        }
+
+        private static Core.Action GetAction(ConsoleOptions options)
+        {
+            if (options.Init)
+            {
+                return Core.Action.Init;
+            }
+            else if (options.Update)
+            {
+                return Core.Action.Update;
+            }
+            else if (options.Clear)
+            {
+                return Core.Action.Clear;
+            }
+            else 
+            {
+                return Core.Action.Read;
+            }
         }
     }
 }

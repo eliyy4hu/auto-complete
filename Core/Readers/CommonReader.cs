@@ -15,6 +15,7 @@ namespace Core.Readers
                 new DocWordsReader()
             };
         }
+
         public override string ReadText(string inputPath)
         {
             var reader = Readers
