@@ -1,5 +1,6 @@
+using DocumentFormat.OpenXml.Packaging;
 using System.Collections.Generic;
-
+using System.IO;
 namespace Core.Readers
 {
     public class DocWordsReader : TextReaderBase
@@ -7,14 +8,20 @@ namespace Core.Readers
         public override List<string> SupportedExtensions => new List<string>
         {
             "doc",
+            "docx",
             "fb2",
-            "epub"
         };
 
         public override string ReadText(string inputPath)
         {
-            var doc = Xceed.Words.NET.DocX.Load(inputPath);
-            return doc.Text;
+            var bytes = File.ReadAllBytes(inputPath);
+            MemoryStream memoryStream = new MemoryStream(bytes);
+
+            using (WordprocessingDocument wordDocument = WordprocessingDocument.Open(memoryStream, false))
+            {
+                MainDocumentPart mainPart = wordDocument.MainDocumentPart;
+                return mainPart.Document.Body.InnerText;
+            }
         }
     }
 }

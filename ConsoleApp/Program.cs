@@ -1,7 +1,6 @@
-﻿using CommandLine;
+﻿using Autofac;
+using CommandLine;
 using Core;
-using Core.PreProcess;
-using Core.Readers;
 using Core.Services;
 using System;
 using System.Collections.Generic;
@@ -11,6 +10,8 @@ namespace ConsoleApp
 {
     internal class Program
     {
+        private const int Count = 5;
+
         private static void Main(string[] args)
         {
             args = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
@@ -18,22 +19,58 @@ namespace ConsoleApp
             options.WithParsed(x => Console.WriteLine(WithParsed(x)));
         }
 
-        private static Result WithParsed(ConsoleOptions options)
+        private static Result WithParsed(ConsoleOptions consoleOptions)
         {
-            var validateArgs = ValidateArguments(options);
+            var validateArgs = ValidateArguments(consoleOptions);
             if (!validateArgs.IsSucceed)
             {
                 return validateArgs;
             }
 
-            using (var context = new DataContext())
+            var options = ConvertToProcessOptions(consoleOptions);
+
+            Start(options);
+            return Result.Success();
+        }
+
+        private static void Start(ProcessOptions options)
+        {
+            IContainer container = StartUp.InjectDependencies(options);
+
+            using (var scope = container.BeginLifetimeScope())
             {
-                var reader = new CommonReader();
-                var preprocessor = new Preprocessor();
-                var dictionaryReader = new InMemoryBinSearchDictionaryService(context);
-                var dictionaryUpdater = new InMemoryBinSearchDictionaryService(context);
-                var processor = new TextFileProcessor(reader, preprocessor, dictionaryUpdater, dictionaryReader);
-                return processor.Process(ConvertToProcessOptions(options));
+                ResolveScope(scope, options);
+            }
+        }
+
+        private static Result ResolveScope(ILifetimeScope scope, ProcessOptions options)
+        {
+            if (options.Action == Core.Action.Clear)
+            {
+                scope.Resolve<IDictionaryUpdater>().ClearDictionary();
+                return Result.Success("Clear successfull");
+            }
+            else if (options.Action == Core.Action.Init || options.Action == Core.Action.Update)
+            {
+                return scope.Resolve<TextProcessor>().Process(options.Action);
+            }
+            else if (options.Action == Core.Action.Read)
+            {
+                ProcessInput(scope.Resolve<IDictionaryReader>());
+            }
+            return Result.Success();
+        }
+
+        private static void ProcessInput(IDictionaryReader dictionaryReader)
+        {
+            var input = Console.ReadLine();
+            while (!string.IsNullOrWhiteSpace(input))
+            {
+                var result = dictionaryReader
+                    .GetMostFrequenciesWords(input, Count).ToList();
+                result.ForEach(w => Console.WriteLine(w));
+                Console.WriteLine();
+                input = Console.ReadLine();
             }
         }
 
@@ -69,13 +106,15 @@ namespace ConsoleApp
                 Action = GetAction(options)
             };
 
-            if (string.IsNullOrWhiteSpace(options.InputDirectory))
+            if (!string.IsNullOrWhiteSpace(options.InputDirectory))
             {
                 result.TargetType = TargetType.Directory;
+                result.Target = options.InputDirectory;
             }
-            if (string.IsNullOrWhiteSpace(options.InputFile))
+            else if (!string.IsNullOrWhiteSpace(options.InputFile))
             {
                 result.TargetType = TargetType.File;
+                result.Target = options.InputFile;
             }
             return result;
         }
@@ -94,7 +133,7 @@ namespace ConsoleApp
             {
                 return Core.Action.Clear;
             }
-            else 
+            else
             {
                 return Core.Action.Read;
             }
