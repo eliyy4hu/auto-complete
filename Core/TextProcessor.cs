@@ -49,9 +49,6 @@ namespace Core
             }
         }
 
-        
-
-
         private Result ProcessText(string text, Action action)
         {
             var words = TextUtils.SplitTextByWords(text);

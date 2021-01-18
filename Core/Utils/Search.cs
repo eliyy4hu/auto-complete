@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Linq;
 
 namespace Core.Utils
 {
     public static class Search
     {
-        public static int IndexOfFirstGreatOrEqual<T1, T2>(T1[] source, Func<T1, T2> selector, T2 search) 
+        public static int IndexOfFirstGreatOrEqual<T1, T2>(T1[] source, Func<T1, T2> selector, T2 search)
             where T2 : IComparable
         {
             var l = 0;
@@ -15,7 +14,7 @@ namespace Core.Utils
                 var currentIndex = l + (r - l) / 2;
                 var current = selector(source[currentIndex]);
                 var compare = current.CompareTo(search);
-                
+
                 if (compare > 0)
                 {
                     r = currentIndex;

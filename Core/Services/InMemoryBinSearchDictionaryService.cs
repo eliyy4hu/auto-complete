@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using Core.Models;
-using System.Linq;
+﻿using Core.Models;
 using Core.Utils;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Core.Services
 {
@@ -25,7 +25,7 @@ namespace Core.Services
 
         public IEnumerable<string> GetMostFrequenciesWords(string prefix, int count)
         {
-            var index = Search.IndexOfFirstGreatOrEqual(dictionary, e=>e.Word, prefix);
+            var index = Search.IndexOfFirstGreatOrEqual(dictionary, e => e.Word, prefix);
             var current = dictionary[index];
             var startWithPrefix = new List<DictionaryEntry>();
             while (current.Word.StartsWith(prefix))
@@ -37,7 +37,7 @@ namespace Core.Services
             return startWithPrefix
                 .OrderByDescending(e => e.Count)
                 .Take(5)
-                .Select(e=>e.Word);
+                .Select(e => e.Word);
         }
 
         public void InitDictionary(IEnumerable<string> words)

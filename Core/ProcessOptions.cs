@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Core
+﻿namespace Core
 {
     public class ProcessOptions
     {
@@ -10,6 +6,7 @@ namespace Core
         public TargetType TargetType;
         public string Target;
     }
+
     public enum Action
     {
         Read,
@@ -17,6 +14,7 @@ namespace Core
         Update,
         Clear,
     }
+
     public enum TargetType
     {
         File,
