@@ -2,7 +2,6 @@
 using CommandLine;
 using Core;
 using Core.Services;
-using Core.Utils;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -26,7 +25,7 @@ namespace Server
             {
                 var builder = new ContainerBuilder();
                 builder.RegisterType<Server>().AsSelf()
-                    .WithParameter(new TypedParameter(typeof(int),  x.Port.Value));
+                    .WithParameter(new TypedParameter(typeof(int), x.Port.Value));
                 var readInject = DI.InjectReading(builder);
                 var server = readInject.Build().Resolve<Server>();
                 ProcessInput();
@@ -91,15 +90,19 @@ namespace Server
 
         private static void ProcessInput()
         {
-            var input = Input.ReadLineWithCancel();
+            var input = Console.ReadLine();
 
             while (true)
             {
-                logger.Debug(input);
-                var args = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                var options = Parser.Default.ParseArguments<ConsoleOptions>(args);
-                options.WithParsed(x => WithParsed(x));
-                input = Input.ReadLineWithCancel();
+                if (!string.IsNullOrWhiteSpace(input))
+                {
+                    logger.Debug(input);
+                    var args = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var options = Parser.Default.ParseArguments<ConsoleOptions>(args);
+                    options.WithParsed(x => WithParsed(x));
+                }
+
+                input = Console.ReadLine();
             }
         }
 
