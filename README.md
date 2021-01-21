@@ -15,7 +15,8 @@ CREATE TABLE DictionaryDB.[dbo].[FrequencyDictionary](
 ) ON [PRIMARY]
 GO
 ```
-Для запуска необходимо прописать connectionStrings в конфиги запускаемых проектов (ConsoleApp, Server) (Или в App.config внутри проектов перед билдом)
+Для запуска необходимо прописать connectionStrings в конфиги запускаемых проектов (ConsoleApp, Server) 
+(Или в App.config соответственных проектов перед билдом)
 
 Примеры запуска ConsoleApp
 ```
