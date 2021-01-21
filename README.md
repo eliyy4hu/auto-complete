@@ -24,11 +24,16 @@ ConsoleApp.exe --update -f input.txt
 
 ConsoleApp.exe --update -d Directory
 
-ConsoleApp.exe --clear 
+ConsoleApp.exe --clear
+
 Client 
+
 Client.exe --port 8888 --ip 127.0.0.1
+
 Server
+
 Server.exe --port 8888
+
 Затем ввод команд в формате, как ConsoleApp
 
 
