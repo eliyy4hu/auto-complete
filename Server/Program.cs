@@ -18,8 +18,6 @@ namespace Server
         {
             var options = Parser.Default.ParseArguments<ServerConsoleOptions>(args);
             options.WithParsed(x => StartWithOptions(x));
-
-            
         }
 
         private static void StartWithOptions(ServerConsoleOptions x)
@@ -38,7 +36,6 @@ namespace Server
                 Console.WriteLine("Enter port to start");
                 Environment.Exit(-1);
             }
-            
         }
 
         private static void WithParsed(ConsoleOptions consoleOptions)

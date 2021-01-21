@@ -1,6 +1,7 @@
 ﻿using Core.Models;
 using Core.Utils;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -39,9 +40,14 @@ namespace Core.Services
                 context.FrequencyDictionary
                     .Add(new DictionaryEntry { Word = word.Key, Count = word.Value });
             }
+            
             context.SaveChanges();
+            UpdateLastUpdateTime();
         }
-
+        public void UpdateLastUpdateTime()
+        {
+            State.LastUpdate = DateTime.Now;
+        }
         public bool Initialized()
         {
             return context.FrequencyDictionary.Any();
@@ -64,6 +70,7 @@ namespace Core.Services
                 }
             }
             context.SaveChanges();
+            UpdateLastUpdateTime();
         }
 
         private Dictionary<string, int> GetFrequencyDictionary(IEnumerable<string> words)

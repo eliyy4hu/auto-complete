@@ -7,7 +7,6 @@ namespace Core
     public class DataContext : DbContext
     {
         public DbSet<DictionaryEntry> FrequencyDictionary { get; set; }
-        
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -17,8 +16,6 @@ namespace Core
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            /*modelBuilder.Entity<DictionaryEntry>()
-                .ToTable("New_FrequencyDictionary", t => t.ExcludeFromMigrations());*/
         }
     }
 }
