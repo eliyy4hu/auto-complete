@@ -22,7 +22,7 @@ namespace Core.Utils
             {
                 result = buffer.ToString();
             }
-
+            Console.WriteLine();
             return result;
         }
     }

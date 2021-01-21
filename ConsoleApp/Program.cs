@@ -2,11 +2,11 @@
 using CommandLine;
 using Core;
 using Core.Services;
+using Core.Utils;
 using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace ConsoleApp
 {
@@ -18,7 +18,7 @@ namespace ConsoleApp
 
         private static void Main(string[] args)
         {
-            logger.Info("Loading...");
+            Console.WriteLine("Loading");
             args = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
             var options = Parser.Default.ParseArguments<ConsoleOptions>(args);
             options.WithParsed(x => WithParsed(x));
@@ -60,6 +60,7 @@ namespace ConsoleApp
                 return Result.Error("Unepected error. View log file to see a stacktrace");
             }
         }
+
         public static IContainer InjectDependencies(ProcessOptions options)
         {
             var builder = new ContainerBuilder();
@@ -68,6 +69,7 @@ namespace ConsoleApp
             var container = builder.Build();
             return container;
         }
+
         private static Result ResolveScope(ILifetimeScope scope, ProcessOptions options)
         {
             if (options.Action == Core.Action.Clear)
@@ -88,35 +90,16 @@ namespace ConsoleApp
 
         private static void ProcessInput(IDictionaryReader dictionaryReader)
         {
-            var input = ReadLineWithCancel();
+            var input = Input.ReadLineWithCancel();
             while (!string.IsNullOrWhiteSpace(input))
             {
                 logger.Debug(input);
                 var result = dictionaryReader
                     .GetMostFrequenciesWords(input, Count).ToList();
-                result.ForEach(w => logger.Info(w));
-                logger.Info("");
-                input = ReadLineWithCancel();
+                result.ForEach(w => Console.WriteLine(w));
+                Console.WriteLine();
+                input = Input.ReadLineWithCancel();
             }
-        }
-        private static string ReadLineWithCancel()
-        {
-            string result = null;
-            StringBuilder buffer = new StringBuilder();
-            ConsoleKeyInfo info = Console.ReadKey(true);
-            while (info.Key != ConsoleKey.Enter && info.Key != ConsoleKey.Escape)
-            {
-                Console.Write(info.KeyChar);
-                buffer.Append(info.KeyChar);
-                info = Console.ReadKey(true);
-            }
-
-            if (info.Key == ConsoleKey.Enter)
-            {
-                result = buffer.ToString();
-            }
-
-            return result;
         }
 
         private static Result ValidateArguments(ConsoleOptions options)
