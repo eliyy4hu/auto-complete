@@ -1,15 +1,24 @@
 ﻿using Core.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Configuration;
 
 namespace Core
 {
     public class DataContext : DbContext
     {
         public DbSet<DictionaryEntry> FrequencyDictionary { get; set; }
+        
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=DESKTOP-29MERC1;Database=DictionaryDB;Trusted_Connection=True;");
+            var conString = ConfigurationManager.ConnectionStrings["dictionaryDb"];
+            optionsBuilder.UseSqlServer(ConfigurationManager.ConnectionStrings["dictionaryDb"].ConnectionString);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            /*modelBuilder.Entity<DictionaryEntry>()
+                .ToTable("New_FrequencyDictionary", t => t.ExcludeFromMigrations());*/
         }
     }
 }

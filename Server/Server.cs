@@ -1,33 +1,35 @@
-﻿using System;
+﻿using Core;
+using Core.Services;
+using Core.Utils;
+using System;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 
 namespace Server
 {
     internal class Server
     {
-        private const int Buffer_Size = 256;
-        private TcpListener server = null;
+        private const int Buffer_Size = 4096;
+        private readonly TcpListener server = null;
+        private readonly IDictionaryReader dictionaryReader;
 
-        public Server(string ip, int port)
+        public Server(int port, IDictionaryReader reader)
         {
-            IPAddress localAddr = IPAddress.Parse(ip);
-            server = new TcpListener(localAddr, port);
+            server = new TcpListener(IPAddress.Loopback, port);
             server.Start();
-            StartListener();
+            this.dictionaryReader = reader;
+            new Thread(StartListener).Start();
         }
 
-        public void StartListener()
+        private void StartListener()
         {
             try
             {
                 while (true)
                 {
-                    Console.WriteLine("Waiting for a connection...");
                     TcpClient client = server.AcceptTcpClient();
-                    Console.WriteLine("Connected!");
                     Thread t = new Thread(new ParameterizedThreadStart(HandleDeivce));
                     t.Start(client);
                 }
@@ -35,6 +37,9 @@ namespace Server
             catch (SocketException e)
             {
                 Console.WriteLine("SocketException: {0}", e);
+            }
+            finally
+            {
                 server.Stop();
             }
         }
@@ -43,21 +48,14 @@ namespace Server
         {
             TcpClient client = (TcpClient)obj;
             var stream = client.GetStream();
-            string imei = String.Empty;
-            string data = null;
-            Byte[] bytes = new byte[Buffer_Size];
+            byte[] bytes = new byte[Buffer_Size];
             int i;
             try
             {
                 while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
                 {
-                    string hex = BitConverter.ToString(bytes);
-                    data = Encoding.ASCII.GetString(bytes, 0, i);
-                    Console.WriteLine("{1}: Received: {0}", data, Thread.CurrentThread.ManagedThreadId);
-                    string str = "Hey Device!";
-                    Byte[] reply = System.Text.Encoding.ASCII.GetBytes(str);
+                    Byte[] reply = GetReply(bytes);
                     stream.Write(reply, 0, reply.Length);
-                    Console.WriteLine("{1}: Sent: {0}", str, Thread.CurrentThread.ManagedThreadId);
                 }
             }
             catch (Exception e)
@@ -65,6 +63,19 @@ namespace Server
                 Console.WriteLine("Exception: {0}", e.ToString());
                 client.Close();
             }
+        }
+
+        private byte[] GetReply(byte[] bytes)
+        {
+            var command = Serialize.ByteArrayToObject(bytes);
+            if (!(command is GetWordsByPrefixCommand getWordsByPrefix))
+            {
+                return new byte[0];
+            }
+
+            var prefix = getWordsByPrefix.Body;
+            var result = dictionaryReader.GetMostFrequenciesWords(prefix, 5).ToArray();
+            return Serialize.ObjectToByteArray(result);
         }
     }
 }

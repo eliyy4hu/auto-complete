@@ -7,11 +7,31 @@ using System.Collections.Generic;
 
 namespace Core
 {
-    public static class StartUp
+    public static class DI
     {
-        public static IContainer InjectDependencies(ProcessOptions options)
+        public static ContainerBuilder Inject(ContainerBuilder builder, ProcessOptions options)
         {
-            var builder = new ContainerBuilder();
+            builder = InjectReading(builder);
+            builder = InjectUpdating(options,builder);
+            return builder;
+        }
+        public static ContainerBuilder InjectReading(ContainerBuilder builder)
+        {
+            builder = InjectCommon(builder);
+            builder.RegisterType<InMemoryBinSearchDictionaryReader>()
+                            .As<IDictionaryReader>();
+            return builder;
+        }
+
+        public static ContainerBuilder InjectCommon(ContainerBuilder builder)
+        {
+            builder.RegisterType<DataContext>().AsSelf();
+            return builder;
+        }
+
+        public static ContainerBuilder InjectUpdating(ProcessOptions options, ContainerBuilder builder)
+        {
+            builder = InjectCommon(builder);
             builder.RegisterType<CommonReader>()
                 .As<TextReaderBase>();
 
@@ -34,18 +54,12 @@ namespace Core
             builder.RegisterType<Preprocessor>()
                 .As<IWordsPreprocessor>();
 
-            builder.RegisterType<DataContext>().AsSelf();
 
-            builder.RegisterType<InMemoryBinSearchDictionaryService>()
-                .As<IDictionaryReader>();
-
-            builder.RegisterType<SimpleDictionaryService>()
+            builder.RegisterType<DictionaryUpdaterService>()
                 .As<IDictionaryUpdater>();
 
             builder.RegisterType<TextProcessor>().AsSelf();
-
-            var container = builder.Build();
-            return container;
+            return builder;
         }
     }
 }

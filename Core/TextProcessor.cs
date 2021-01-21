@@ -4,6 +4,7 @@ using Core.TextProviders;
 using Core.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Core
 {
@@ -29,8 +30,12 @@ namespace Core
             if (!validationResult.IsSucceed)
                 return validationResult;
             var texts = textProvider.GetTexts();
+            if (!texts.Any())
+            {
+                return Result.Error("No files found or supported");
+            }
             ProcessTexts(texts, action);
-            return Result.Success();
+            return Result.Success($"{action} succeed");
         }
 
         private void ProcessTexts(IEnumerable<string> texts, Action action)
@@ -52,7 +57,7 @@ namespace Core
         private Result ProcessText(string text, Action action)
         {
             var words = TextUtils.SplitTextByWords(text);
-            wordsPreprocessor.PreprocessWords(words);
+            words = wordsPreprocessor.PreprocessWords(words);
             return ProcessWords(words, action);
         }
 

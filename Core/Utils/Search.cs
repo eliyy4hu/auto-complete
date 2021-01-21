@@ -7,6 +7,10 @@ namespace Core.Utils
         public static int IndexOfFirstGreatOrEqual<T1, T2>(T1[] source, Func<T1, T2> selector, T2 search)
             where T2 : IComparable
         {
+            if (source.Length == 0)
+            {
+                return -1;
+            }
             var l = 0;
             var r = source.Length - 1;
             while (l < r - 1)

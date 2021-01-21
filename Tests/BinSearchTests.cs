@@ -65,6 +65,10 @@ namespace Tests
                        new string[] { "abe" },
                        "abc")
                    .Returns(0);
+                    yield return new TestCaseData(
+                       new string[] {  },
+                       "abc")
+                   .Returns(-1);
                 }
             }
         }

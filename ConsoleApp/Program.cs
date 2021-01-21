@@ -2,53 +2,78 @@
 using CommandLine;
 using Core;
 using Core.Services;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace ConsoleApp
 {
     internal class Program
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         private const int Count = 5;
 
         private static void Main(string[] args)
         {
+            logger.Info("Loading...");
             args = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
             var options = Parser.Default.ParseArguments<ConsoleOptions>(args);
-            options.WithParsed(x => Console.WriteLine(WithParsed(x)));
+            options.WithParsed(x => WithParsed(x));
         }
 
-        private static Result WithParsed(ConsoleOptions consoleOptions)
+        private static void WithParsed(ConsoleOptions consoleOptions)
         {
             var validateArgs = ValidateArguments(consoleOptions);
             if (!validateArgs.IsSucceed)
             {
-                return validateArgs;
+                logger.Error(validateArgs);
+                return;
             }
 
             var options = ConvertToProcessOptions(consoleOptions);
-
-            Start(options);
-            return Result.Success();
-        }
-
-        private static void Start(ProcessOptions options)
-        {
-            IContainer container = StartUp.InjectDependencies(options);
-
-            using (var scope = container.BeginLifetimeScope())
+            var result = Start(options);
+            if (result.IsSucceed)
             {
-                ResolveScope(scope, options);
+                logger.Info(result);
+            }
+            else
+            {
+                logger.Error(result);
             }
         }
 
+        private static Result Start(ProcessOptions options)
+        {
+            IContainer container = InjectDependencies(options);
+
+            using var scope = container.BeginLifetimeScope();
+            try
+            {
+                return ResolveScope(scope, options);
+            }
+            catch (Exception e)
+            {
+                logger.Debug(e);
+                return Result.Error("Unepected error. View log file to see a stacktrace");
+            }
+        }
+        public static IContainer InjectDependencies(ProcessOptions options)
+        {
+            var builder = new ContainerBuilder();
+            builder = DI.InjectUpdating(options, builder);
+            builder = DI.InjectReading(builder);
+            var container = builder.Build();
+            return container;
+        }
         private static Result ResolveScope(ILifetimeScope scope, ProcessOptions options)
         {
             if (options.Action == Core.Action.Clear)
             {
                 scope.Resolve<IDictionaryUpdater>().ClearDictionary();
-                return Result.Success("Clear successfull");
+                return Result.Success("Clear succeed");
             }
             else if (options.Action == Core.Action.Init || options.Action == Core.Action.Update)
             {
@@ -63,15 +88,35 @@ namespace ConsoleApp
 
         private static void ProcessInput(IDictionaryReader dictionaryReader)
         {
-            var input = Console.ReadLine();
+            var input = ReadLineWithCancel();
             while (!string.IsNullOrWhiteSpace(input))
             {
+                logger.Debug(input);
                 var result = dictionaryReader
                     .GetMostFrequenciesWords(input, Count).ToList();
-                result.ForEach(w => Console.WriteLine(w));
-                Console.WriteLine();
-                input = Console.ReadLine();
+                result.ForEach(w => logger.Info(w));
+                logger.Info("");
+                input = ReadLineWithCancel();
             }
+        }
+        private static string ReadLineWithCancel()
+        {
+            string result = null;
+            StringBuilder buffer = new StringBuilder();
+            ConsoleKeyInfo info = Console.ReadKey(true);
+            while (info.Key != ConsoleKey.Enter && info.Key != ConsoleKey.Escape)
+            {
+                Console.Write(info.KeyChar);
+                buffer.Append(info.KeyChar);
+                info = Console.ReadKey(true);
+            }
+
+            if (info.Key == ConsoleKey.Enter)
+            {
+                result = buffer.ToString();
+            }
+
+            return result;
         }
 
         private static Result ValidateArguments(ConsoleOptions options)

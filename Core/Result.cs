@@ -22,8 +22,7 @@
 
         public override string ToString()
         {
-            var prefix = IsSucceed ? "Success - " : "Error - ";
-            return prefix + Message;
+            return  Message;
         }
     }
 }

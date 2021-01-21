@@ -10,8 +10,6 @@ namespace Core.Services
 
         public void ClearDictionary();
 
-        public void SaveResult();
-
         public bool Initialized();
     }
 }

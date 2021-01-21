@@ -34,9 +34,9 @@ namespace Core.TextProviders
                     result.AddRange(GetFilesRecursive(d));
                 }
             }
-            catch (Exception excpt)
+            catch (Exception)
             {
-                Console.WriteLine(excpt.Message);
+                throw;
             }
             return result;
         }

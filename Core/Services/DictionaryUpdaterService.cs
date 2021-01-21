@@ -6,15 +6,17 @@ using System.Linq;
 
 namespace Core.Services
 {
-    public class SimpleDictionaryService :
+    public class DictionaryUpdaterService :
         IDictionaryUpdater, IDictionaryReader
     {
+        private const int Min_Word_Occurance_Count = 3;
         private DataContext context;
 
-        public SimpleDictionaryService(DataContext context)
+        public DictionaryUpdaterService(DataContext context)
         {
             this.context = context;
         }
+
         public void ClearDictionary()
         {
             context.Database.ExecuteSqlRaw($"delete from {nameof(context.FrequencyDictionary)}");
@@ -26,12 +28,12 @@ namespace Core.Services
                 .Where(e => e.Word.StartsWith(prefix))
                 .OrderByDescending(e => e.Count)
                 .Take(count)
-                .Select(e=>e.Word);
+                .Select(e => e.Word);
         }
 
         public void InitDictionary(IEnumerable<string> words)
         {
-            var freqs = TextUtils.GetEntriesCount(words);
+            var freqs = GetFrequencyDictionary(words);
             foreach (var word in freqs)
             {
                 context.FrequencyDictionary
@@ -45,14 +47,9 @@ namespace Core.Services
             return context.FrequencyDictionary.Any();
         }
 
-        public void SaveResult()
-        {
-            
-        }
-
         public void UpdateDictionary(IEnumerable<string> words)
         {
-            var freqs = TextUtils.GetEntriesCount(words);
+            var freqs = GetFrequencyDictionary(words);
             foreach (var item in freqs)
             {
                 var existed = context.FrequencyDictionary.Find(item.Key);
@@ -67,6 +64,13 @@ namespace Core.Services
                 }
             }
             context.SaveChanges();
+        }
+
+        private Dictionary<string, int> GetFrequencyDictionary(IEnumerable<string> words)
+        {
+            return TextUtils.GetEntriesCount(words)
+                .Where(f => f.Value > Min_Word_Occurance_Count)
+                .ToDictionary(f => f.Key, f => f.Value);
         }
     }
 }

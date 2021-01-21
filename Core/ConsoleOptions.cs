@@ -24,4 +24,5 @@ namespace Core
             HelpText = "Input file to be processed.")]
         public string InputDirectory { get; set; }
     }
+
 }
