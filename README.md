@@ -19,8 +19,11 @@ GO
 
 Примеры запуска ConsoleApp
 ConsoleApp.exe --init -f input.docx
+
 ConsoleApp.exe --update -f input.txt
+
 ConsoleApp.exe --update -d Directory
+
 ConsoleApp.exe --clear 
 Client 
 Client.exe --port 8888 --ip 127.0.0.1
